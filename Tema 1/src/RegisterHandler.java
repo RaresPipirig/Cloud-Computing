@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-public class LoginHandler implements HttpHandler {
+public class RegisterHandler implements HttpHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         if("POST".equals(exchange.getRequestMethod())){
@@ -25,28 +25,15 @@ public class LoginHandler implements HttpHandler {
                 String username = requestJson.getString("username");
                 String password = requestJson.getString("password");
 
-                int result = DBController.logIn(username, password);
-
-                if(result == 0){
-                    Controller.sendResponse(exchange, 204,
-                            "{\n\"message\": \"User does not exist.\"\n}");
+                if(DBController.doesUserExist(username)){
+                    Controller.sendResponse(exchange, 409,
+                            "{\n\"message\": \"User already exists.\"\n}");
                     return;
                 }
 
-                if(result == -1){
-                    Controller.sendResponse(exchange, 200,
-                            "{\n\"message\": \"Wrong password.\"\n}");
-                    return;
-                }
-
-                String token = SessionManager.generateSessionToken();
-                SessionManager.createSession(result, token);
-
-                Controller.sendResponse(exchange, 200,
-                        "{" +
-                                "\"message\": \"Login successful.\"," +
-                                "\"token\": \"" + token + "\"" +
-                                "}");
+                DBController.addUser(username, password);
+                Controller.sendResponse(exchange, 201,
+                        "{\n\"message\": \"User registered successfully.\"\n}");
 
 
             }catch(JSONException e){
@@ -58,6 +45,8 @@ public class LoginHandler implements HttpHandler {
                 Controller.sendResponse(exchange, 500,
                         "{\n\"message\": \"Internal server error.\"\n}");
             }
+
+
         }
         else{
             exchange.sendResponseHeaders(405, -1);
