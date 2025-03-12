@@ -166,7 +166,50 @@ public class UserByIDHandler implements HttpHandler {
     }
 
     private static void changeUsername(HttpExchange exchange) throws IOException {
-        Controller.sendResponse(exchange, 501,
-                "{\n\"message\": \"Not implemented.\"\n}");
+        InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8);
+        BufferedReader br = new BufferedReader(isr);
+        StringBuilder requestBody = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+            requestBody.append(line);
+        }
+
+        try{
+            JSONObject requestJson = new JSONObject(requestBody.toString());
+            String token = requestJson.getString("token");
+            String username = requestJson.getString("username");
+
+            int id = SessionManager.getID(token);
+
+            if(id == -1){
+                Controller.sendResponse(exchange, 400,
+                        "{\n\"message\": \"Invalid session token.\"\n}");
+                return;
+            }
+
+            if(DBController.doesUserExist(username)){
+                Controller.sendResponse(exchange, 403,
+                        "{\n\"message\": \"Username is already taken.\"\n}");
+                return;
+            }
+
+            if(DBController.updateUsernameById(id, username)){
+                Controller.sendResponse(exchange, 200,
+                        "{\n\"message\": \"Password updated successfully.\"\n}");
+            }
+            else{
+                Controller.sendResponse(exchange, 404,
+                        "{\n\"message\": \"User not found.\"\n}");
+            }
+
+        }catch(JSONException e){
+            Controller.sendResponse(exchange, 400,
+                    "{\n\"message\": \"Invalid data.\"\n}");
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            Controller.sendResponse(exchange, 500,
+                    "{\n\"message\": \"Internal server error.\"\n}");
+        }
     }
 }

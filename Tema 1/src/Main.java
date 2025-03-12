@@ -16,11 +16,5 @@ public class Main {
         server.setExecutor(null);
         server.start();
         System.out.println("Server is running.");
-
-        /*try{
-
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
     }
 }

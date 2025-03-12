@@ -183,6 +183,34 @@ public class DBController {
         }
     }
 
+    public static boolean updateUsernameById(int userId, String newUsername) throws Exception {
+        File xmlFile = getDB();
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(xmlFile);
+
+        NodeList records = doc.getElementsByTagName("user");
+        boolean updated = false;
+
+        for (int i = 0; i < records.getLength(); i++) {
+            Element record = (Element) records.item(i);
+            int id = Integer.parseInt(record.getAttribute("id"));
+
+            if (id == userId) {
+                record.getElementsByTagName("username").item(0).setTextContent(newUsername);
+                updated = true;
+                break;
+            }
+        }
+
+        if (updated) {
+            saveXML(doc);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public static void addUser(String username, String password) throws Exception {
         File xmlFile = getDB();
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
